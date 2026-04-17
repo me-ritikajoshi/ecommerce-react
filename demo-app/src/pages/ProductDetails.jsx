@@ -1,26 +1,54 @@
 import React ,{useState,useEffect} from 'react'
-import axios  from 'axios'
 import { useParams } from 'react-router-dom'
 import { ToastContainer, toast } from 'react-toastify';
   import 'react-toastify/dist/ReactToastify.css';
   import { Helmet } from 'react-helmet';
+import { getProductById } from '../services/productService';
+import { getCartItems, saveCartItems } from '../utils/cartStorage';
 
 const ProductDetails = () => {
     const [product,setProduct]=useState({})
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
     const params=useParams()
     const id=params.productId
 
     useEffect(()=>{
-        axios.get(`https://fakestoreapi.com/products/${id}`)
-        .then(res=>setProduct(res.data))
-        .catch(err=>console.log(err))
+        let isMounted = true
+
+        const fetchProduct = async () => {
+          try {
+            const data = await getProductById(id)
+            if (isMounted) {
+              setProduct(data)
+            }
+          } catch (err) {
+            if (isMounted) {
+              setError(err.message || 'Unable to load product details.')
+            }
+          } finally {
+            if (isMounted) {
+              setLoading(false)
+            }
+          }
+        }
+
+        fetchProduct()
+
+        return () => {
+          isMounted = false
+        }
 
     },[id])
 
     //handling add to cart button
     const addToCart=()=>{
+      if (!product.id) {
+        return
+      }
+
       //fetch items from the cart
-      const cartItems=JSON.parse(localStorage.getItem('cartItems')) || []
+      const cartItems=getCartItems()
       const productData={
         id:product.id,
         title:product.title,
@@ -38,7 +66,7 @@ const ProductDetails = () => {
         toast.error('Product is already in the cart')
       }else{
         cartItems.push(productData)
-        localStorage.setItem('cartItems', JSON.stringify(cartItems))
+        saveCartItems(cartItems)
         toast.success(`${productData.title} is added to cart`)
       }
     }
@@ -46,10 +74,13 @@ const ProductDetails = () => {
   return (
     <>
     <Helmet>
-      <title>{product.title}</title>
+      <title>{product.title || 'Product Details'}</title>
     </Helmet>
-    <ToastContainer theme='colored' position='top-centered'/>
+    <ToastContainer theme='colored' position='top-center'/>
     <div className="container my-5">
+        {loading ? <p>Loading product details...</p> : null}
+        {error ? <p className="alert alert-danger">{error}</p> : null}
+        {!loading && !error ? (
         <div className="d-flex justify-content-center align-items-center">
              <div className="col-md-4">
                 <img src={product.image} alt={product.title}  width={300}/>
@@ -67,6 +98,7 @@ const ProductDetails = () => {
 
              </div>
         </div>
+        ) : null}
     </div>
     </>
   )

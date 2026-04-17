@@ -1,11 +1,11 @@
 import { FETCH_PRODUCT_REQUEST, FETCH_PRODUCT_SUCCESS,FETCH_PRODUCT_FAILURE } from "../constants/productConstant";
-import axios from "axios";
+import { getProducts } from "../../services/productService";
 
 
 export const fetchProducts=()=>async(dispatch)=>{
     try{
         dispatch({type:FETCH_PRODUCT_REQUEST})
-        const {data}=await axios.get(`https://fakestoreapi.com/products`)
+        const data=await getProducts()
         dispatch({
             type:FETCH_PRODUCT_SUCCESS,
             payload:data

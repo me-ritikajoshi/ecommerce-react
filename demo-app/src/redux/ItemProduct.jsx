@@ -18,8 +18,8 @@ const ItemProduct = () => {
 
   return (
     <>
-    {products && products.map((item,i)=>(
-      <div key={i}>
+    {products && products.map(item=>(
+      <div key={item.id}>
         <h1>{item.title}</h1>
       </div>
     ))}
